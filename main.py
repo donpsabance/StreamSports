@@ -29,25 +29,43 @@ async def watch(ctx, *args):
 
     # await ctx.send('@' + ctx.author.id)
     result = find_game(*args)
-    if type(result) == tuple:
-        link = result[0]
-        game = result[1]
+    result_alternative = find_game_alternative(*args)
 
-        embedded = discord.Embed(title=game.split('\n')[0], url=link)
-        embedded.set_footer(text=game.split('\n')[1])
-        await ctx.send(embed=embedded)
-        # await ctx.send(find_game(*args))
+    if result is not None:
+        if type(result) == tuple:
+            link = result[0]
+            game = result[1]
 
-    elif type(result) == list:
+            embedded = discord.Embed(title=game.split('\n')[0], url=link)
+            embedded.set_footer(text=game.split('\n')[1])
+            await ctx.send(embed=embedded)
 
-        embedded = discord.Embed(title="Livestreams", url='http://crackstreams.com/nbastreams/')
-        for games in result:
-            embedded.add_field(name='-', value='[Game](' + games[0] + ')\n' + games[1])
-        await ctx.send(embed=embedded)
+        elif type(result) == list:
+
+            embedded = discord.Embed(title="Livestreams", url='http://crackstreams.com/nbastreams/')
+            for games in result:
+                embedded.add_field(name='-', value='[Game](' + games[0] + ')\n' + games[1])
+            await ctx.send(embed=embedded)
 
     else:
 
-        await ctx.send(result)
+        embedded = discord.Embed(title="ERROR", description="No livestreams found")
+        await ctx.send(embed=embedded)
+
+    if result_alternative is not None:
+        # all games
+        if type(result_alternative) == list:
+
+            embedded = discord.Embed(title='Alternate links', url='https://nbabite.com/')
+            for result in result_alternative:
+                embedded.add_field(name='-', value=result)
+            await ctx.send(embed=embedded)
+
+        # certain team
+        elif type(result_alternative) == str:
+
+            embedded = discord.Embed(title='Alternate link', url=result_alternative)
+            await ctx.send(embed=embedded)
 
 
 @bot.command()
@@ -118,6 +136,51 @@ def find_game(*args):
         return "Invalid command, please use /watch <nba/nfl/mma...> <team name> \nExample: /watch nba warriors"
 
 
+def find_game_alternative(*args):
+
+    if 3 > len(args) > 0:
+
+        category = args[0]
+
+        url = "https://nbabite.com/"
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        games = soup.findAll('div', {'class': 'competition'})
+        nba_games = None
+        results = []
+
+        if category.lower() == 'nba':
+
+            for game in games:
+
+                names = game.findAll('div', {'class': 'name'})
+                for name in names:
+                    if name is not None:
+                        if 'nba' in name.get_text().lower():
+                            nba_games = game
+
+            if nba_games is not None:
+                links = nba_games.findAll('a', href=True)
+
+                for link in links:
+                    results.append(link['href'])
+
+            # find all nba streams
+            if len(args) == 1:
+                return results
+
+            # find a certain team stream
+            elif len(args) == 2:
+
+                team = args[1]
+                for result in results:
+                    if team in result:
+                        return result
+
+        elif category.lower() == 'nfl':
+            return None
+
+
 def get_score(*args):
 
     if 3 > len(args) > 0:
@@ -130,7 +193,7 @@ def get_score(*args):
             page = requests.get(url)
 
             soup = BeautifulSoup(page.content, 'html.parser')
-            scoreboards = soup.findAll('div', {'class': 'scoreboard-group-1'})
+            scoreboards = soup.findAll('div', {'class': 'scoreboard'})
 
             for scoreboard in scoreboards:
 
