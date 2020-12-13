@@ -24,17 +24,23 @@ async def watch(ctx, *args):
 
     # await ctx.send('@' + ctx.author.id)
     result = find_game(*args)
-    link = result[0]
-    game = result[1]
 
-    # await ctx.send(link)
-    # await ctx.send(game.split('\n')[0])
-    # await ctx.send(game.split('\n')[1])
+    if type(result) == tuple:
+        link = result[0]
+        game = result[1]
 
-    embedded = discord.Embed(title=game.split('\n')[0], url=link)
-    embedded.set_footer(text=game.split('\n')[1])
-    await ctx.send(embed=embedded)
-    # await ctx.send(find_game(*args))
+        # await ctx.send(link)
+        # await ctx.send(game.split('\n')[0])
+        # await ctx.send(game.split('\n')[1])
+
+        embedded = discord.Embed(title=game.split('\n')[0], url=link)
+        embedded.set_footer(text=game.split('\n')[1])
+        await ctx.send(embed=embedded)
+        # await ctx.send(find_game(*args))
+
+    else:
+
+        await ctx.send(result)
 
 
 def find_game(*args):
