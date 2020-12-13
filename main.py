@@ -111,45 +111,49 @@ def get_score(*args):
             page = requests.get(url)
 
             soup = BeautifulSoup(page.content, 'html.parser')
-            games = soup.findAll('div', {'class': 'score'})
+            scoreboards = soup.findAll('div', {'class': 'scoreboard'})
 
-            for game in games:
+            for scoreboard in scoreboards:
 
-                game_scores = game.findAll('span', {'class': 'YahooSans'})
+                games = scoreboard.findAll('div', {'class': 'score'})
 
-                team_a = ''
-                team_b = ''
-                counter = 0
-                for score in game_scores:
+                for game in games:
 
-                    if counter < 3:
-                        team_a += score.get_text().strip() + " "
-                    else:
-                        team_b += score.get_text().strip() + " "
-                    counter += 1
+                    game_scores = game.findAll('span', {'class': 'YahooSans'})
 
-                    if counter == 6:
+                    team_a = ''
+                    team_b = ''
+                    counter = 0
+                    for score in game_scores:
 
-                        team_a = team_a.strip()
-                        team_b = team_b.strip()
+                        if counter < 3:
+                            team_a += score.get_text().strip() + " "
+                        else:
+                            team_b += score.get_text().strip() + " "
+                        counter += 1
 
-                        team_scores.append((team_a, team_b))
-                        team_a = ''
-                        team_b = ''
-                        counter = 0
+                        if counter == 6:
 
-        if len(team_scores) == 0:
-            return "No scheduled games found"
+                            team_a = team_a.strip()
+                            team_b = team_b.strip()
 
-        if len(args) == 1:
-            return team_scores
+                            team_scores.append((team_a, team_b))
+                            team_a = ''
+                            team_b = ''
+                            counter = 0
 
-        elif len(args) == 2:
+            if len(team_scores) == 0:
+                return "No scheduled games found"
 
-            team = args[1]
-            for (a, b) in team_scores:
-                if team.lower() in a.lower() or team in b.lower():
-                    return a, b
+            if len(args) == 1:
+                return team_scores
+
+            elif len(args) == 2:
+
+                team = args[1]
+                for (a, b) in team_scores:
+                    if team.lower() in a.lower() or team in b.lower():
+                        return a, b
 
     else:
         return "Invalid command, please use /scores <nba/nfl/mma...> <team name> \nExample: /score nba warriors"
