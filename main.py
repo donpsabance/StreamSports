@@ -14,6 +14,11 @@ bot = commands.Bot(command_prefix='/', description='ehh')
 
 
 @bot.event
+async def on_ready():
+    print('StreamSports bot is ready to go!')
+
+
+@bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
         return
@@ -24,19 +29,36 @@ async def watch(ctx, *args):
 
     # await ctx.send('@' + ctx.author.id)
     result = find_game(*args)
-
     if type(result) == tuple:
         link = result[0]
         game = result[1]
-
-        # await ctx.send(link)
-        # await ctx.send(game.split('\n')[0])
-        # await ctx.send(game.split('\n')[1])
 
         embedded = discord.Embed(title=game.split('\n')[0], url=link)
         embedded.set_footer(text=game.split('\n')[1])
         await ctx.send(embed=embedded)
         # await ctx.send(find_game(*args))
+
+    else:
+
+        await ctx.send(result)
+
+
+@bot.command()
+async def scores(ctx, *args):
+
+    result = get_score(*args)
+    if type(result) == tuple:
+
+        embedded = discord.Embed(title="Scores", description=result[0] + '\n' + result[1])
+        await ctx.send(embed=embedded)
+
+    elif type(result) == list:
+
+        embedded = discord.Embed(title="Scores", url='https://sports.yahoo.com/nba/scoreboard/')
+        for current_score in result:
+
+            embedded.add_field(name='-', value=current_score[0] + '\n' + current_score[1])
+        await ctx.send(embed=embedded)
 
     else:
 
@@ -77,5 +99,60 @@ def find_game(*args):
         return "Invalid command, please use /watch <nba/nfl/mma...> <team name> \n Example: /watch nba warriors"
 
 
-# find_game('nba', 'hornets')
+def get_score(*args):
+
+    if 3 > len(args) > 0:
+
+        team_scores = []
+
+        if args[0].lower() == 'nba':
+
+            url = 'https://sports.yahoo.com/nba/scoreboard/'
+            page = requests.get(url)
+
+            soup = BeautifulSoup(page.content, 'html.parser')
+            games = soup.findAll('div', {'class': 'score'})
+
+            for game in games:
+
+                game_scores = game.findAll('span', {'class': 'YahooSans'})
+
+                team_a = ''
+                team_b = ''
+                counter = 0
+                for score in game_scores:
+
+                    if counter < 3:
+                        team_a += score.get_text().strip() + " "
+                    else:
+                        team_b += score.get_text().strip() + " "
+                    counter += 1
+
+                    if counter == 6:
+
+                        team_a = team_a.strip()
+                        team_b = team_b.strip()
+
+                        team_scores.append((team_a, team_b))
+                        team_a = ''
+                        team_b = ''
+                        counter = 0
+
+        if len(team_scores) == 0:
+            return "No scheduled games found"
+
+        if len(args) == 1:
+            return team_scores
+
+        elif len(args) == 2:
+
+            team = args[1]
+            for (a, b) in team_scores:
+                if team.lower() in a.lower() or team in b.lower():
+                    return a, b
+
+    else:
+        return "Invalid command, please use /scores <nba/nfl/mma...> <team name> \nExample: /score nba warriors"
+
+
 bot.run(TOKEN)
