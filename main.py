@@ -38,6 +38,13 @@ async def watch(ctx, *args):
         await ctx.send(embed=embedded)
         # await ctx.send(find_game(*args))
 
+    elif type(result) == list:
+
+        embedded = discord.Embed(title="Livestreams", url='http://crackstreams.com/nbastreams/')
+        for games in result:
+            embedded.add_field(name='-', value='[Game](' + games[0] + ')\n' + games[1])
+        await ctx.send(embed=embedded)
+
     else:
 
         await ctx.send(result)
@@ -67,10 +74,9 @@ async def scores(ctx, *args):
 
 def find_game(*args):
 
-    if len(args) == 2:
+    if 3 > len(args) > 0:
 
         category = args[0]
-        team = args[1]
 
         url_end = ''
         if category.lower() == 'nba':
@@ -83,20 +89,33 @@ def find_game(*args):
 
         soup = BeautifulSoup(page.content, 'html.parser')
         links = soup.findAll('a', href=True)
+        results = []
 
         for link in links:
 
             media = link.find('div', {'class': 'media'})
             if media is not None:
-                if team in media.get_text().strip().lower():
 
-                    return link['href'], link.get_text().strip()
+                if len(args) == 1:
 
-        return "No scheduled games found"
+                    if 'vs' in media.get_text().strip().lower():
+                        results.append((link['href'], link.get_text().strip()))
+
+                elif len(args) == 2:
+
+                    team = args[1]
+                    if team in media.get_text().strip().lower():
+                        return link['href'], link.get_text().strip()
+
+        if len(results) == 0:
+            return "No livestreams found"
+
+        else:
+            return results
 
     else:
 
-        return "Invalid command, please use /watch <nba/nfl/mma...> <team name> \n Example: /watch nba warriors"
+        return "Invalid command, please use /watch <nba/nfl/mma...> <team name> \nExample: /watch nba warriors"
 
 
 def get_score(*args):
@@ -111,7 +130,7 @@ def get_score(*args):
             page = requests.get(url)
 
             soup = BeautifulSoup(page.content, 'html.parser')
-            scoreboards = soup.findAll('div', {'class': 'scoreboard'})
+            scoreboards = soup.findAll('div', {'class': 'scoreboard-group-1'})
 
             for scoreboard in scoreboards:
 
@@ -143,7 +162,7 @@ def get_score(*args):
                             counter = 0
 
             if len(team_scores) == 0:
-                return "No scheduled games found"
+                return "No current games being played"
 
             if len(args) == 1:
                 return team_scores
