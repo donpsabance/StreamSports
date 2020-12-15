@@ -5,11 +5,9 @@ from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 from dotenv import load_dotenv
 import requests
-import socket
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-
 bot = commands.Bot(command_prefix='/', description='ehh')
 
 
@@ -87,7 +85,8 @@ async def scores(ctx, *args):
 
     else:
 
-        await ctx.send(result)
+        embedded = discord.Embed(description='No current games being played')
+        await ctx.send(embed=embedded)
 
 
 def find_game(*args):
@@ -128,6 +127,9 @@ def find_game(*args):
         if len(results) == 0:
             return "No livestreams found"
 
+        elif len(results) == 1:
+            return results[0]
+
         else:
             return results
 
@@ -142,43 +144,48 @@ def find_game_alternative(*args):
 
         category = args[0]
 
-        url = "https://nbabite.com/"
+        url = ''
+        if category.lower() == 'nba':
+            url = 'https://nbabite.com/'
+        elif category.lower() == 'nfl':
+            url = 'https://nflbite.com/'
+        else:
+            return "Invalid league. NBA and NFL are the only ones currently supported"
+
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
         games = soup.findAll('div', {'class': 'competition'})
-        nba_games = None
+        found_games = None
         results = []
 
-        if category.lower() == 'nba':
+        for game in games:
 
-            for game in games:
+            names = game.findAll('div', {'class': 'name'})
+            for name in names:
+                if name is not None:
+                    if 'nba' in name.get_text().lower() or 'nfl' in name.get_text().lower():
+                        found_games = game
 
-                names = game.findAll('div', {'class': 'name'})
-                for name in names:
-                    if name is not None:
-                        if 'nba' in name.get_text().lower():
-                            nba_games = game
+        if found_games is not None:
+            links = found_games.findAll('a', href=True)
 
-            if nba_games is not None:
-                links = nba_games.findAll('a', href=True)
+            for link in links:
+                results.append(link['href'])
 
-                for link in links:
-                    results.append(link['href'])
-
-            # find all nba streams
-            if len(args) == 1:
+        # find all streams
+        if len(args) == 1:
+            if len(results) == 1:
+                return results[0]
+            else:
                 return results
 
-            # find a certain team stream
-            elif len(args) == 2:
+        # find a certain team stream
+        elif len(args) == 2:
 
-                team = args[1]
-                for result in results:
-                    if team in result:
-                        return result
-
-        elif category.lower() == 'nfl':
-            return None
+            team = args[1]
+            for result in results:
+                if team in result:
+                    return result
 
 
 def get_score(*args):
@@ -187,55 +194,58 @@ def get_score(*args):
 
         team_scores = []
 
+        url = ''
         if args[0].lower() == 'nba':
-
             url = 'https://sports.yahoo.com/nba/scoreboard/'
-            page = requests.get(url)
+        elif args[0].lower() == 'nfl':
+            url = 'https://ca.sports.yahoo.com/nfl/scoreboard/'
 
-            soup = BeautifulSoup(page.content, 'html.parser')
-            scoreboards = soup.findAll('div', {'class': 'scoreboard'})
+        page = requests.get(url)
 
-            for scoreboard in scoreboards:
+        soup = BeautifulSoup(page.content, 'html.parser')
+        scoreboards = soup.findAll('div', {'class': 'scoreboard'})
 
-                games = scoreboard.findAll('div', {'class': 'score'})
+        for scoreboard in scoreboards:
 
-                for game in games:
+            games = scoreboard.findAll('div', {'class': 'score'})
 
-                    game_scores = game.findAll('span', {'class': 'YahooSans'})
+            for game in games:
 
-                    team_a = ''
-                    team_b = ''
-                    counter = 0
-                    for score in game_scores:
+                game_scores = game.findAll('span', {'class': 'YahooSans'})
 
-                        if counter < 3:
-                            team_a += score.get_text().strip() + " "
-                        else:
-                            team_b += score.get_text().strip() + " "
-                        counter += 1
+                team_a = ''
+                team_b = ''
+                counter = 0
+                for score in game_scores:
 
-                        if counter == 6:
+                    if counter < 3:
+                        team_a += score.get_text().strip() + " "
+                    else:
+                        team_b += score.get_text().strip() + " "
+                    counter += 1
 
-                            team_a = team_a.strip()
-                            team_b = team_b.strip()
+                    if counter == 6:
 
-                            team_scores.append((team_a, team_b))
-                            team_a = ''
-                            team_b = ''
-                            counter = 0
+                        team_a = team_a.strip()
+                        team_b = team_b.strip()
 
-            if len(team_scores) == 0:
-                return "No current games being played"
+                        team_scores.append((team_a, team_b))
+                        team_a = ''
+                        team_b = ''
+                        counter = 0
 
-            if len(args) == 1:
-                return team_scores
+        if len(team_scores) == 0:
+            return "No current games being played"
 
-            elif len(args) == 2:
+        if len(args) == 1:
+            return team_scores
 
-                team = args[1]
-                for (a, b) in team_scores:
-                    if team.lower() in a.lower() or team in b.lower():
-                        return a, b
+        elif len(args) == 2:
+
+            team = args[1]
+            for (a, b) in team_scores:
+                if team.lower() in a.lower() or team in b.lower():
+                    return a, b
 
     else:
         return "Invalid command, please use /scores <nba/nfl/mma...> <team name> \nExample: /score nba warriors"
