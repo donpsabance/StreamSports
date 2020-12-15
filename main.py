@@ -116,7 +116,7 @@ def find_game(*args):
 
                 if len(args) == 1:
 
-                    if 'vs' in media.get_text().strip().lower():
+                    if 'vs' in media.get_text().strip().lower() or '@' in media.get_text().strip().lower():
                         results.append((link['href'], link.get_text().strip()))
 
                 elif len(args) == 2:
