@@ -15,11 +15,29 @@ bot = commands.Bot(command_prefix='/', description='ehh')
 async def on_ready():
     print('StreamSports bot is ready to go!')
 
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,
+                                                        name='/ss'))
+
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
         return
+
+
+@bot.command(name='ss')
+async def help_me(ctx, *args):
+
+    embedded = discord.Embed(title='StreamSports')
+    embedded.add_field(name='/watch <nba/nfl> <team>',
+                       value='The first field is required, the second is optional. '
+                             'If only one field is passed onto the command, '
+                             'a whole list of games steams will be displayed')
+    embedded.add_field(name='/scores <nba/nfl> <team>',
+                       value='The first field is required, the second is optional. '
+                             'If only one field is passed onto the command, '
+                             'a whole list of game scores will be displayed')
+    await ctx.send(embed=embedded)
 
 
 @bot.command()
