@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 from bs4 import BeautifulSoup
 import discord
 from discord.ext import commands
@@ -14,6 +16,7 @@ bot = commands.Bot(command_prefix='/', description='ehh')
 @bot.event
 async def on_ready():
     print('StreamSports bot is ready to go!')
+    print(datetime.now())
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,
                                                         name='/ss'))
@@ -269,5 +272,4 @@ def get_score(*args):
         return "Invalid command, please use /scores <nba/nfl/mma...> <team name> \nExample: /score nba warriors"
 
 
-print(get_score('nba'))
-# bot.run(TOKEN)
+bot.run(TOKEN)
