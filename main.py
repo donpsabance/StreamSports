@@ -1,6 +1,5 @@
 import os
-from datetime import datetime
-
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import discord
 from discord.ext import commands
@@ -16,7 +15,6 @@ bot = commands.Bot(command_prefix='/', description='ehh')
 @bot.event
 async def on_ready():
     print('StreamSports bot is ready to go!')
-    print(datetime.now())
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,
                                                         name='/ss'))
@@ -91,6 +89,8 @@ async def watch(ctx, *args):
 async def scores(ctx, *args):
 
     result = get_score(*args)
+    date = datetime.now() - timedelta(hours=8)
+
     if type(result) == tuple:
 
         embedded = discord.Embed(title="Scores", description=result[0] + '\n' + result[1])
@@ -213,16 +213,17 @@ def get_score(*args):
 
     if 3 > len(args) > 0:
 
+        date_now = datetime.now() - timedelta(hours=8)
+        date = date_now.strftime('%Y-%m-%d')
         team_scores = []
 
         url = ''
         if args[0].lower() == 'nba':
-            url = 'https://ca.sports.yahoo.com/nba/scoreboard/'
+            url = 'https://sports.yahoo.com/nba/scoreboard/?confId=&schedState=1&dateRange=' + str(date)
         elif args[0].lower() == 'nfl':
             url = 'https://ca.sports.yahoo.com/nfl/scoreboard/'
 
         page = requests.get(url)
-
         soup = BeautifulSoup(page.content, 'html.parser')
         scoreboards = soup.findAll('div', {'class': 'scoreboard'})
 
