@@ -214,7 +214,7 @@ def get_score(*args):
 
         url = ''
         if args[0].lower() == 'nba':
-            url = 'https://sports.yahoo.com/nba/scoreboard/'
+            url = 'https://ca.sports.yahoo.com/nba/scoreboard/'
         elif args[0].lower() == 'nfl':
             url = 'https://ca.sports.yahoo.com/nfl/scoreboard/'
 
