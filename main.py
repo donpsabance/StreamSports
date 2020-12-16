@@ -269,4 +269,5 @@ def get_score(*args):
         return "Invalid command, please use /scores <nba/nfl/mma...> <team name> \nExample: /score nba warriors"
 
 
-bot.run(TOKEN)
+print(get_score('nba'))
+# bot.run(TOKEN)
