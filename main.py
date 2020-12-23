@@ -64,6 +64,11 @@ async def watch(ctx, *args):
                 embedded.add_field(name='-', value='[Game](' + games[0] + ')\n' + games[1])
             await ctx.send(embed=embedded)
 
+        else:
+
+            embedded = discord.Embed(title="ERROR", description=result)
+            await ctx.send(embed=embedded)
+
     else:
 
         embedded = discord.Embed(title="ERROR", description="No livestreams found")
@@ -82,6 +87,11 @@ async def watch(ctx, *args):
         elif type(result_alternative) == str:
 
             embedded = discord.Embed(title='Alternate link', url=result_alternative)
+            await ctx.send(embed=embedded)
+
+        else:
+
+            embedded = discord.Embed(title="ERROR", description=result)
             await ctx.send(embed=embedded)
 
 
@@ -122,13 +132,18 @@ def find_game(*args):
         elif category.lower() == 'nfl':
             url_end = 'nfl-streams/'
 
-        url = 'http://crackstreams.com/' + url_end
-        page = requests.get(url)
+        try:
 
-        soup = BeautifulSoup(page.content, 'html.parser')
-        links = soup.findAll('a', href=True)
+            url = 'http://crackstreams.com/' + url_end
+            page = requests.get(url)
+
+            soup = BeautifulSoup(page.content, 'html.parser')
+            links = soup.findAll('a', href=True)
+
+        except requests.exceptions.RequestException:
+            return "Could not reach main server. Try again in a few minutes"
+
         results = []
-
         for link in links:
 
             media = link.find('div', {'class': 'media'})
@@ -173,12 +188,16 @@ def find_game_alternative(*args):
         else:
             return "Invalid league. NBA and NFL are the only ones currently supported"
 
-        page = requests.get(url)
-        soup = BeautifulSoup(page.content, 'html.parser')
-        games = soup.findAll('div', {'class': 'competition'})
-        found_games = None
-        results = []
+        try:
+            page = requests.get(url)
+            soup = BeautifulSoup(page.content, 'html.parser')
+            games = soup.findAll('div', {'class': 'competition'})
+            found_games = None
 
+        except requests.exceptions.RequestException:
+            return "Could not reach alternate server. Try again in a few minutes"
+
+        results = []
         for game in games:
 
             names = game.findAll('div', {'class': 'name'})
