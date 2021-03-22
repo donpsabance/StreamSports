@@ -59,7 +59,7 @@ async def watch(ctx, *args):
 
         elif type(result) == list:
 
-            embedded = discord.Embed(title="Livestreams", url='http://crackstreams.com/nbastreams/')
+            embedded = discord.Embed(title="Livestreams", url='http://crackstreams.is/nba-streams/')
             for games in result:
                 embedded.add_field(name='-', value='[Game](' + games[0] + ')\n' + games[1])
             await ctx.send(embed=embedded)
@@ -134,7 +134,7 @@ def find_game(*args):
 
         try:
 
-            url = 'http://crackstreams.com/' + url_end
+            url = 'http://crackstreams.is/' + url_end
             page = requests.get(url)
 
             soup = BeautifulSoup(page.content, 'html.parser')
